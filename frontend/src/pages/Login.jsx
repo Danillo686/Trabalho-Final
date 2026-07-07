@@ -34,13 +34,6 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <input
-                    type="password"
-                    placeholder="Confirmar senha"
-                    value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                    required
-                />
                 <button type="submit" disabled={loading}>
                     {loading ? "Carregando..." : "Entrar"}
                 </button>

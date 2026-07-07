@@ -15,6 +15,8 @@ src/
 
   npm init -y
   npm install express mysql2 cors dotenv
+  npm i bcryptjs
+  npm install jsonwebtoken
 
 
 

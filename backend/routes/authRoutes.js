@@ -11,8 +11,6 @@ const router = Router();
 router.post('/cadastro', cadastrar);
 router.post('/login', login);
 
-//Rotas de GET - Busca usuário
-router.get('/cadastro', getUsuario);
-router.get('/login', getUsuario);
+
 
 export default router;

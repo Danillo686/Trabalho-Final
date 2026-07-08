@@ -1,56 +1,65 @@
+import { useCadastro } from "../hooks/useCadastro";
 import { Link } from "react-router-dom";
-import { useLogin } from "../hooks/useLogin.jsx";
 
-export default function Login() {
+export default function Cadastro() {
+    // Puxa tudo o que o hook criou
     const {
         username,
         setUsername,
         password,
         setPassword,
+        passwordConfirm,
+        setPasswordConfirm,
         loading,
         error,
-        handleLogin,
-    } = useLogin();
+        handleCadastro
+    } = useCadastro();
 
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h1>Faça o seu Login!</h1>
+                <h1>Faça o seu Cadastro!</h1>
                 <p>Informe suas credenciais para continuar</p>
-                
+            
                 {error && <p className="error-message">{error}</p>}
-                
-                <form onSubmit={handleLogin}>
+
+                <form onSubmit={handleCadastro}>
                     <div className="form-group">
                         <label>Usuário</label>
                         <input
                             type="text"
-                            placeholder="Digite seu nome"
-                            required
+                            placeholder="Usuário"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                            required
                         />
                     </div>
                     <div className="form-group">
                         <label>Senha</label>
                         <input
                             type="password"
-                            placeholder="Digite sua senha"
-                            required
+                            placeholder="Senha"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            required
                         />
                     </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="btn-primary"
-                    >
-                        {loading ? "Entrando..." : "Login"}
+                    <div className="form-group">
+                        <label>Confirmar Senha</label>
+                        <input
+                            type="password"
+                            placeholder="Confirmar senha"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit" disabled={loading} className="btn-primary">
+                        {loading ? "Cadastrando..." : "Cadastrar"}
                     </button>
                 </form>
                 <p className="auth-switch">
-                    Não tem uma conta? Faça o seu <Link to="/cadastro">Cadastro!</Link>
+                    Já tem uma conta? Faça o seu <Link to="/">Login!</Link>
                 </p>
             </div>
         </div>

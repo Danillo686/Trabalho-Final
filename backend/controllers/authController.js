@@ -2,21 +2,20 @@ import pool from '../db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = 'minha_frase_super_secreta_123_abc';
-process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
 //CADASTRAR
 export async function cadastrar(req, res) {
-    const { username, password, confirm_password } = req.body;
+    const { username, password, passwordConfirm } = req.body;
 
     //Verifica se todos os campos foram enviados
-    if (!username || !password || !confirm_password) {
+    if (!username || !password || !passwordConfirm) {
         return res.status(400).json({
             message: "Todos os campos são obrigatórios."
         });
     }
 
     //Verifica se as senhas são iguais
-    if (password !== confirm_password) {
+    if (password !== passwordConfirm) {
         return res.status(400).json({
             message: "As senhas não são iguais."
         })
@@ -64,6 +63,8 @@ export async function cadastrar(req, res) {
 
 //LOGIN
 export async function login(req, res) {
+    console.log(req.body);
+
     const { username, password } = req.body;
 
     //Verificação de se os campos foram enviados
@@ -117,7 +118,6 @@ export async function login(req, res) {
         console.error(error);
         return res.status(500).json({
             message: 'Erro interno no servidor'
-
         });
-    }    
+    }
 }

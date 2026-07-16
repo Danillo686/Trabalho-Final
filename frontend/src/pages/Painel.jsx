@@ -1,17 +1,25 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import api from "../data/api";
-import { useEstudante } from "../context/EstudanteContext";
-import Loading from "../components/Loading";
+/**
+ * Painel.jsx — Painel de desempenho do estudante.
+ *
+ * Exibe o histórico de todos os tópicos já concluídos pelo estudante,
+ * com a data de conclusão, o placar (acertos/total) e a porcentagem de acertos.
+ * O histórico é buscado no banco de dados ao montar a tela.
+ */
+
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../data/api';
+import { useEstudante } from '../context/EstudanteContext';
+import Loading from '../components/Loading';
 
 export default function Painel() {
     const { estudante } = useEstudante();
 
     const [historico, setHistorico] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [error, setError] = useState('');
 
-    // useEffect para buscar histórico ao montar a tela
+    // Busca o histórico do estudante ao montar a tela
     useEffect(() => {
         if (!estudante?.id) return;
 
@@ -21,7 +29,7 @@ export default function Painel() {
                 const res = await api.get(`/progresso/${estudante.id}`);
                 setHistorico(res.data);
             } catch (err) {
-                setError("Erro ao buscar histórico.");
+                setError('Erro ao buscar histórico.');
             } finally {
                 setLoading(false);
             }
@@ -37,11 +45,10 @@ export default function Painel() {
 
             {error && <p className="error-message">{error}</p>}
 
-            {/* Renderização condicional: Loading enquanto busca */}
             {loading ? (
                 <Loading />
             ) : historico.length === 0 ? (
-                // Renderização condicional: lista vazia
+                // Estado vazio: estudante ainda não concluiu nenhum tópico
                 <div className="painel-vazio">
                     <p>Você ainda não completou nenhum tópico.</p>
                     <Link to="/diagnostico" className="btn-primary link-btn">
@@ -49,7 +56,7 @@ export default function Painel() {
                     </Link>
                 </div>
             ) : (
-                // Lista do histórico com .map() e key
+                // Lista do histórico
                 <div className="historico-lista">
                     <h2>Histórico de Tópicos</h2>
                     {historico.map((item) => {
@@ -62,12 +69,12 @@ export default function Painel() {
                                 <div>
                                     <h3>{item.topico_titulo}</h3>
                                     <p className="historico-data">
-                                        {new Date(item.data).toLocaleDateString("pt-BR")}
+                                        {new Date(item.data).toLocaleDateString('pt-BR')}
                                     </p>
                                 </div>
                                 <div className="historico-resultado">
                                     <span>{item.acertos}/{item.total}</span>
-                                    <span className={`badge-nota ${porcentagem >= 70 ? "badge-aprovado" : "badge-reprovado"}`}>
+                                    <span className={`badge-nota ${porcentagem >= 70 ? 'badge-aprovado' : 'badge-reprovado'}`}>
                                         {porcentagem}%
                                     </span>
                                 </div>

@@ -1,15 +1,17 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node migrate.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "API REST do Trabalho Final — autenticação, IA (Groq) e progresso do estudante.",
   "dependencies": {
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",

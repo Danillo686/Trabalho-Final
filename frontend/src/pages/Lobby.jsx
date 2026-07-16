@@ -1,5 +1,13 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useEstudante } from "../context/EstudanteContext";
+/**
+ * Lobby.jsx — Página inicial após o login.
+ *
+ * Dá boas-vindas ao estudante e oferece atalhos para as principais funcionalidades:
+ * Fazer o Diagnóstico, Ver a Trilha de Estudos e Ver o Painel de desempenho.
+ * Também disponibiliza o botão de logout.
+ */
+
+import { Link, useNavigate } from 'react-router-dom';
+import { useEstudante } from '../context/EstudanteContext';
 
 export default function Lobby() {
     const { estudante, logout } = useEstudante();
@@ -7,15 +15,16 @@ export default function Lobby() {
 
     function handleLogout() {
         logout();
-        navigate("/");
+        navigate('/');
     }
 
     return (
         <div className="lobby-container">
             <header className="lobby-header">
-                <h1>Bem-vindo, {estudante?.nome || "Estudante"}!</h1>
+                <h1>Bem-vindo, {estudante?.nome || 'Estudante'}!</h1>
                 <button onClick={handleLogout} className="btn-logout">Sair</button>
             </header>
+
             <main className="lobby-content">
                 <div className="lobby-card">
                     <h2>O que você quer fazer?</h2>

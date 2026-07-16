@@ -1,21 +1,33 @@
-import axios from "axios";
+/**
+ * iaController.js — Controller de integração com a IA (Groq).
+ *
+ * Expõe quatro endpoints que se comunicam com a API do Groq (modelo LLaMA):
+ *   - gerarDiagnostico: analisa as respostas do estudante e identifica lacunas
+ *   - gerarTrilha:      cria uma trilha de tópicos com base nas lacunas
+ *   - gerarQuestoes:    gera questões de múltipla escolha sobre um tópico
+ *   - avaliarRespostas: corrige as respostas e devolve um feedback educacional
+ */
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+import axios from 'axios';
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
-// Função auxiliar para chamar a Groq
+// Função interna — envia um prompt para a API do Groq e retorna o texto da resposta
 async function chamarGroq(mensagem) {
     const resposta = await axios.post(
         GROQ_URL,
         {
-            model: "llama3-8b-8192",
+            model: 'llama3-8b-8192',
             messages: [
                 {
-                    role: "system",
-                    content: "Você é um assistente pedagógico. Responda sempre em português. Responda APENAS com JSON válido, sem texto adicional, sem markdown, sem explicações.",
+                    role: 'system',
+                    content:
+                        'Você é um assistente pedagógico. Responda sempre em português. ' +
+                        'Responda APENAS com JSON válido, sem texto adicional, sem markdown, sem explicações.',
                 },
                 {
-                    role: "user",
+                    role: 'user',
                     content: mensagem,
                 },
             ],
@@ -24,7 +36,7 @@ async function chamarGroq(mensagem) {
         {
             headers: {
                 Authorization: `Bearer ${GROQ_KEY}`,
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
             timeout: 30000,
         }
@@ -33,13 +45,19 @@ async function chamarGroq(mensagem) {
     return resposta.data.choices[0].message.content;
 }
 
-// POST /ia/diagnostico
-// Recebe as respostas do questionário e retorna as lacunas identificadas
+// Extrai o primeiro objeto JSON encontrado em um texto
+function extrairJSON(texto) {
+    const match = texto.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('A IA não retornou um JSON válido.');
+    return JSON.parse(match[0]);
+}
+
+// POST /ia/diagnostico — Analisa respostas do questionário e identifica lacunas
 export async function gerarDiagnostico(req, res) {
     const { respostas } = req.body;
 
     if (!respostas) {
-        return res.status(400).json({ message: "Respostas são obrigatórias." });
+        return res.status(400).json({ message: 'Respostas são obrigatórias.' });
     }
 
     try {
@@ -56,72 +74,56 @@ Retorne um JSON neste formato exato:
   "resumo": "Breve resumo do diagnóstico"
 }
 `;
-
         const textoResposta = await chamarGroq(prompt);
-
-        // Tenta extrair o JSON da resposta
-        const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("IA não retornou JSON válido");
-        }
-
-        const diagnostico = JSON.parse(jsonMatch[0]);
+        const diagnostico = extrairJSON(textoResposta);
         return res.status(200).json(diagnostico);
     } catch (err) {
-        console.error("Erro ao gerar diagnóstico:", err.message);
-        return res.status(500).json({ message: "Erro ao processar diagnóstico com IA." });
+        console.error('Erro ao gerar diagnóstico:', err.message);
+        return res.status(500).json({ message: 'Erro ao processar diagnóstico com IA.' });
     }
 }
 
-// POST /ia/trilha
-// Recebe as lacunas e retorna uma trilha de tópicos
+// POST /ia/trilha — Gera uma trilha de tópicos com base nas lacunas identificadas
 export async function gerarTrilha(req, res) {
     const { lacunas, nivel } = req.body;
 
     if (!lacunas) {
-        return res.status(400).json({ message: "Lacunas são obrigatórias." });
+        return res.status(400).json({ message: 'Lacunas são obrigatórias.' });
     }
 
     try {
         const prompt = `
-Crie uma trilha de aprendizagem para um estudante de programação com nível "${nivel || "iniciante"}".
+Crie uma trilha de aprendizagem para um estudante de programação com nível "${nivel || 'iniciante'}".
 
-Lacunas identificadas: ${lacunas.join(", ")}
+Lacunas identificadas: ${lacunas.join(', ')}
 
 Retorne um JSON neste formato exato:
 {
   "topicos": [
     { "id": "1", "titulo": "Nome do Tópico", "descricao": "Breve descrição" },
     { "id": "2", "titulo": "Nome do Tópico", "descricao": "Breve descrição" },
-    { "id": "3", "titulo": "Nome do Tópico", "descricao": "Breve descrição" }
+    { "id": "3", "titulo": "Nome do Tópico", "descricao": "Breve descrição" },
+    { "id": "4", "titulo": "Nome do Tópico", "descricao": "Breve descrição" }
   ]
 }
 
 Crie exatamente 4 tópicos relacionados às lacunas identificadas.
 `;
-
         const textoResposta = await chamarGroq(prompt);
-
-        const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("IA não retornou JSON válido");
-        }
-
-        const trilha = JSON.parse(jsonMatch[0]);
+        const trilha = extrairJSON(textoResposta);
         return res.status(200).json(trilha);
     } catch (err) {
-        console.error("Erro ao gerar trilha:", err.message);
-        return res.status(500).json({ message: "Erro ao gerar trilha com IA." });
+        console.error('Erro ao gerar trilha:', err.message);
+        return res.status(500).json({ message: 'Erro ao gerar trilha com IA.' });
     }
 }
 
-// POST /ia/questoes
-// Recebe o nome do tópico e retorna questões de múltipla escolha
+// POST /ia/questoes — Gera questões de múltipla escolha sobre um tópico
 export async function gerarQuestoes(req, res) {
     const { topico } = req.body;
 
     if (!topico) {
-        return res.status(400).json({ message: "Nome do tópico é obrigatório." });
+        return res.status(400).json({ message: 'Nome do tópico é obrigatório.' });
     }
 
     try {
@@ -140,38 +142,28 @@ Retorne um JSON neste formato exato:
   ]
 }
 `;
-
         const textoResposta = await chamarGroq(prompt);
-
-        const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("IA não retornou JSON válido");
-        }
-
-        const questoes = JSON.parse(jsonMatch[0]);
+        const questoes = extrairJSON(textoResposta);
         return res.status(200).json(questoes);
     } catch (err) {
-        console.error("Erro ao gerar questões:", err.message);
-        return res.status(500).json({ message: "Erro ao gerar questões com IA." });
+        console.error('Erro ao gerar questões:', err.message);
+        return res.status(500).json({ message: 'Erro ao gerar questões com IA.' });
     }
 }
 
-// POST /ia/avaliar
-// Recebe as respostas do estudante e retorna feedback
+// POST /ia/avaliar — Avalia as respostas do estudante e retorna feedback educacional
 export async function avaliarRespostas(req, res) {
     const { topico, questoes, respostas } = req.body;
 
     if (!questoes || !respostas) {
-        return res.status(400).json({ message: "Questões e respostas são obrigatórias." });
+        return res.status(400).json({ message: 'Questões e respostas são obrigatórias.' });
     }
 
     try {
-        // Calcula acertos
+        // Calcula a quantidade de acertos localmente
         let acertos = 0;
         questoes.forEach((q) => {
-            if (respostas[q.id] === q.correta) {
-                acertos++;
-            }
+            if (respostas[q.id] === q.correta) acertos++;
         });
 
         const prompt = `
@@ -179,7 +171,12 @@ Um estudante respondeu questões sobre o tópico "${topico}".
 Acertou ${acertos} de ${questoes.length} questões.
 
 Questões e respostas:
-${questoes.map((q) => `Pergunta: ${q.pergunta}\nResposta correta: ${q.correta}\nResposta do estudante: ${respostas[q.id] || "Não respondeu"}`).join("\n\n")}
+${questoes
+    .map(
+        (q) =>
+            `Pergunta: ${q.pergunta}\nResposta correta: ${q.correta}\nResposta do estudante: ${respostas[q.id] || 'Não respondeu'}`
+    )
+    .join('\n\n')}
 
 Dê um feedback educacional em português, explicando os erros e parabenizando os acertos.
 Retorne um JSON neste formato exato:
@@ -189,18 +186,11 @@ Retorne um JSON neste formato exato:
   "feedback": "Texto do feedback aqui"
 }
 `;
-
         const textoResposta = await chamarGroq(prompt);
-
-        const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("IA não retornou JSON válido");
-        }
-
-        const avaliacao = JSON.parse(jsonMatch[0]);
+        const avaliacao = extrairJSON(textoResposta);
         return res.status(200).json(avaliacao);
     } catch (err) {
-        console.error("Erro ao avaliar respostas:", err.message);
-        return res.status(500).json({ message: "Erro ao avaliar respostas com IA." });
+        console.error('Erro ao avaliar respostas:', err.message);
+        return res.status(500).json({ message: 'Erro ao avaliar respostas com IA.' });
     }
 }

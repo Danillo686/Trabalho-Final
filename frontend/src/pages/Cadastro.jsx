@@ -1,8 +1,15 @@
-import { useCadastro } from "../hooks/useCadastro";
-import { Link } from "react-router-dom";
+/**
+ * Cadastro.jsx — Tela de cadastro de novo usuário.
+ *
+ * Exibe o formulário com campos de usuário, senha e confirmação de senha.
+ * Toda a lógica de estado, validação e requisição é gerenciada pelo hook useCadastro.
+ * Em caso de sucesso, o usuário é redirecionado para a tela de login.
+ */
+
+import { Link } from 'react-router-dom';
+import { useCadastro } from '../hooks/useCadastro';
 
 export default function Cadastro() {
-    // Puxa tudo o que o hook criou
     const {
         username,
         setUsername,
@@ -12,7 +19,7 @@ export default function Cadastro() {
         setPasswordConfirm,
         loading,
         error,
-        handleCadastro
+        handleCadastro,
     } = useCadastro();
 
     return (
@@ -20,7 +27,7 @@ export default function Cadastro() {
             <div className="auth-card">
                 <h1>Faça o seu Cadastro!</h1>
                 <p>Informe suas credenciais para continuar</p>
-            
+
                 {error && <p className="error-message">{error}</p>}
 
                 <form onSubmit={handleCadastro}>
@@ -55,9 +62,10 @@ export default function Cadastro() {
                         />
                     </div>
                     <button type="submit" disabled={loading} className="btn-primary">
-                        {loading ? "Cadastrando..." : "Cadastrar"}
+                        {loading ? 'Cadastrando...' : 'Cadastrar'}
                     </button>
                 </form>
+
                 <p className="auth-switch">
                     Já tem uma conta? Faça o seu <Link to="/">Login!</Link>
                 </p>

@@ -1,38 +1,47 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../data/api";
-import { useEstudante } from "../context/EstudanteContext";
-import Loading from "../components/Loading";
+/**
+ * Diagnostico.jsx — Tela de diagnóstico de conhecimento.
+ *
+ * Exibe um questionário fixo para avaliar o nível do estudante.
+ * Ao enviar, as respostas são mandadas para a IA (via backend), que:
+ *   1. Identifica as lacunas de conhecimento (gerarDiagnostico)
+ *   2. Gera uma trilha de tópicos personalizada (gerarTrilha)
+ * A trilha gerada é salva no contexto global e o estudante é redirecionado.
+ */
 
-// Perguntas fixas do diagnóstico
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../data/api';
+import { useEstudante } from '../context/EstudanteContext';
+import Loading from '../components/Loading';
+
+// Perguntas fixas do questionário de diagnóstico
 const PERGUNTAS = [
     {
-        id: "q1",
-        texto: "Como você se sente em relação à lógica de programação?",
-        opcoes: ["Nunca ouvi falar", "Sei o básico", "Tenho boa prática", "Domino bem"],
+        id: 'q1',
+        texto: 'Como você se sente em relação à lógica de programação?',
+        opcoes: ['Nunca ouvi falar', 'Sei o básico', 'Tenho boa prática', 'Domino bem'],
     },
     {
-        id: "q2",
-        texto: "Qual é seu conhecimento em JavaScript?",
-        opcoes: ["Nenhum", "Já vi alguns tutoriais", "Já fiz projetos simples", "Trabalho com JS"],
+        id: 'q2',
+        texto: 'Qual é seu conhecimento em JavaScript?',
+        opcoes: ['Nenhum', 'Já vi alguns tutoriais', 'Já fiz projetos simples', 'Trabalho com JS'],
     },
     {
-        id: "q3",
-        texto: "Você já trabalhou com banco de dados?",
-        opcoes: ["Não", "Só teoria", "Já fiz consultas SQL simples", "Sim, com projetos reais"],
+        id: 'q3',
+        texto: 'Você já trabalhou com banco de dados?',
+        opcoes: ['Não', 'Só teoria', 'Já fiz consultas SQL simples', 'Sim, com projetos reais'],
     },
 ];
 
 export default function Diagnostico() {
-    // Guarda as respostas do estudante (formulário controlado)
     const [respostas, setRespostas] = useState({});
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [error, setError] = useState('');
 
     const navigate = useNavigate();
     const { setTrilha } = useEstudante();
 
-    // Lifting state up: atualiza a resposta de uma pergunta específica
+    // Atualiza a resposta selecionada para uma pergunta específica
     function handleResposta(perguntaId, opcao) {
         setRespostas((anterior) => ({
             ...anterior,
@@ -42,30 +51,29 @@ export default function Diagnostico() {
 
     async function handleEnviar(e) {
         e.preventDefault();
-        setError("");
+        setError('');
 
         // Verifica se todas as perguntas foram respondidas
         if (Object.keys(respostas).length < PERGUNTAS.length) {
-            return setError("Responda todas as perguntas antes de continuar.");
+            return setError('Responda todas as perguntas antes de continuar.');
         }
 
         try {
             setLoading(true);
 
-            // 1) Envia as respostas para a IA diagnosticar
-            const resDiagnostico = await api.post("/ia/diagnostico", { respostas });
+            // 1) Envia as respostas para a IA identificar as lacunas
+            const resDiagnostico = await api.post('/ia/diagnostico', { respostas });
             const { lacunas, nivel } = resDiagnostico.data;
 
             // 2) Pede para a IA gerar a trilha com base nas lacunas
-            const resTrilha = await api.post("/ia/trilha", { lacunas, nivel });
+            const resTrilha = await api.post('/ia/trilha', { lacunas, nivel });
             const { topicos } = resTrilha.data;
 
-            // 3) Salva a trilha no Context (estado global)
+            // 3) Salva a trilha no contexto global e redireciona
             setTrilha(topicos);
-
-            navigate("/trilha");
+            navigate('/trilha');
         } catch (err) {
-            setError(err.response?.data?.message || "Erro ao processar diagnóstico.");
+            setError(err.response?.data?.message || 'Erro ao processar diagnóstico.');
         } finally {
             setLoading(false);
         }
@@ -75,7 +83,7 @@ export default function Diagnostico() {
         return (
             <div className="page-container">
                 <Loading />
-                <p style={{ textAlign: "center", color: "#64748b" }}>
+                <p style={{ textAlign: 'center', color: '#64748b' }}>
                     A IA está analisando suas respostas e gerando sua trilha...
                 </p>
             </div>
@@ -98,7 +106,7 @@ export default function Diagnostico() {
                                 <button
                                     key={opcao}
                                     type="button"
-                                    className={`opcao-btn ${respostas[pergunta.id] === opcao ? "opcao-selecionada" : ""}`}
+                                    className={`opcao-btn ${respostas[pergunta.id] === opcao ? 'opcao-selecionada' : ''}`}
                                     onClick={() => handleResposta(pergunta.id, opcao)}
                                 >
                                     {opcao}
@@ -108,7 +116,7 @@ export default function Diagnostico() {
                     </div>
                 ))}
 
-                <button type="submit" className="btn-primary" style={{ marginTop: "20px" }}>
+                <button type="submit" className="btn-primary" style={{ marginTop: '20px' }}>
                     Gerar minha Trilha
                 </button>
             </form>

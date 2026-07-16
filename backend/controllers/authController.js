@@ -1,44 +1,52 @@
+/**
+ * authController.js — Controller de autenticação.
+ *
+ * Contém as funções de cadastro e login de usuários.
+ * As senhas são criptografadas com bcrypt antes de serem salvas.
+ * O login retorna um token JWT que deve ser usado nas requisições autenticadas.
+ */
+
 import pool from '../db.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-//CADASTRAR
+
+// POST /cadastro — Cria um novo usuário no banco de dados
 export async function cadastrar(req, res) {
     const { username, password, passwordConfirm } = req.body;
 
-    //Verifica se todos os campos foram enviados
+    // Verifica se todos os campos foram enviados
     if (!username || !password || !passwordConfirm) {
         return res.status(400).json({
-            message: "Todos os campos são obrigatórios."
+            message: 'Todos os campos são obrigatórios.'
         });
     }
 
-    //Verifica se as senhas são iguais
+    // Verifica se as senhas são iguais
     if (password !== passwordConfirm) {
         return res.status(400).json({
-            message: "As senhas não são iguais."
-        })
+            message: 'As senhas não são iguais.'
+        });
     }
 
     try {
-
-        //Procura usuários com o mesmo nome
+        // Verifica se já existe um usuário com esse nome
         const [rows] = await pool.query(
-            'SELECT * FROM usuarios WHERE name_user = ?',
+            'SELECT id FROM usuarios WHERE name_user = ?',
             [username]
         );
 
         if (rows.length > 0) {
             return res.status(400).json({
-                message: "Usuário já cadastrado."
+                message: 'Usuário já cadastrado.'
             });
         }
 
-        //Criptografa a senha
+        // Criptografa a senha antes de salvar
         const hashPassword = await bcrypt.hash(password, 10);
 
-        //Salva o usuário 
+        // Insere o novo usuário no banco
         const [result] = await pool.query(
             'INSERT INTO usuarios (name_user, password_user) VALUES (?, ?)',
             [username, hashPassword]
@@ -52,22 +60,18 @@ export async function cadastrar(req, res) {
             }
         });
     } catch (error) {
-
-        console.log(error)
+        console.error('Erro ao cadastrar usuário:', error);
         return res.status(500).json({
-            message: "Erro interno do servidor"
-        })
+            message: 'Erro interno do servidor.'
+        });
     }
 }
 
-
-//LOGIN
+// POST /login — Autentica o usuário e retorna um token JWT
 export async function login(req, res) {
-    console.log(req.body);
-
     const { username, password } = req.body;
 
-    //Verificação de se os campos foram enviados
+    // Verifica se os campos foram enviados
     if (!username || !password) {
         return res.status(400).json({
             message: 'Usuário e senha são obrigatórios.'
@@ -75,37 +79,37 @@ export async function login(req, res) {
     }
 
     try {
-        //Busca o usuário no bando de dados
+        // Busca o usuário no banco de dados
         const [rows] = await pool.query(
             'SELECT * FROM usuarios WHERE name_user = ?',
             [username]
         );
 
-        //Se não encontrar nenhuma linha, o usuário não existe
+        // Mensagem genérica para não revelar qual campo está errado
         if (rows.length === 0) {
             return res.status(401).json({
-                message: 'Usuário ou senha incorretos' //Messagem de erro padrão (nao deixar saber qual deu errado)
-            })
+                message: 'Usuário ou senha incorretos.'
+            });
         }
 
+        const usuario = rows[0];
 
-        const usuario = rows[0]
-        //Compara a senha
+        // Compara a senha enviada com o hash salvo no banco
         const senhaCorreta = await bcrypt.compare(password, usuario.password_user);
 
-        if (!senhaCorreta)
+        if (!senhaCorreta) {
             return res.status(401).json({
-                message: 'Usuário ou senha incorretos'
+                message: 'Usuário ou senha incorretos.'
             });
+        }
 
-        //Gera o token (expira em 1 dia)
+        // Gera o token JWT com validade de 1 dia
         const token = jwt.sign(
             { id: usuario.id, username: usuario.name_user },
             JWT_SECRET,
             { expiresIn: '1d' }
         );
 
-        //Retorno de sucesso
         return res.status(200).json({
             message: 'Login realizado com sucesso!',
             token,
@@ -115,9 +119,9 @@ export async function login(req, res) {
             }
         });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao fazer login:', error);
         return res.status(500).json({
-            message: 'Erro interno no servidor'
+            message: 'Erro interno no servidor.'
         });
     }
 }

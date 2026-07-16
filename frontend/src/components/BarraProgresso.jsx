@@ -1,5 +1,10 @@
-// src/components/BarraProgresso.jsx
-// Recebe concluidos e total por props e exibe a barra de progresso
+/**
+ * BarraProgresso.jsx — Componente de barra de progresso.
+ *
+ * Recebe por props o número de tópicos concluídos e o total,
+ * calcula a porcentagem e exibe uma barra de progresso visual.
+ */
+
 export default function BarraProgresso({ concluidos, total }) {
     const porcentagem = total > 0 ? Math.round((concluidos / total) * 100) : 0;
 
@@ -13,7 +18,7 @@ export default function BarraProgresso({ concluidos, total }) {
                 <div
                     className="barra-progresso-fill"
                     style={{ width: `${porcentagem}%` }}
-                ></div>
+                />
             </div>
         </div>
     );
